@@ -1,7 +1,9 @@
+/* eslint-disable max-lines */
 import type {
   And,
   DeepMergeUnsafe,
   DoesExtend,
+  DrainOuterGeneric,
   If,
   IsNever,
   Not,
@@ -11,7 +13,7 @@ import type { Any } from "./any";
 import type { Never, NeverType } from "./never";
 import type { Resolve, ResolveOptions } from "./resolve";
 import type { Type } from "./type";
-import type { Deserialized, IsSerialized } from "./utils";
+import { Deserialized, IsSerialized } from "./utils";
 
 /**
  * Type id of the `Object` meta-type
@@ -62,14 +64,16 @@ export type _$Object<
   DESERIALIZED = never,
 > = DoesExtend<
   true,
-  {
-    [KEY in Extract<REQUIRED_KEYS, string>]: KEY extends keyof VALUES
-      ? DoesExtend<VALUES[KEY], NeverType>
-      : DoesExtend<OPEN_PROPS, NeverType>;
-  }[Extract<REQUIRED_KEYS, string>]
+  DrainOuterGeneric<
+    {
+      [KEY in Extract<REQUIRED_KEYS, string>]: KEY extends keyof VALUES
+        ? DoesExtend<VALUES[KEY], NeverType>
+        : DoesExtend<OPEN_PROPS, NeverType>;
+    }[Extract<REQUIRED_KEYS, string>]
+  >
 > extends true
   ? Never
-  : {
+  : DrainOuterGeneric<{
       type: ObjectTypeId;
       values: VALUES;
       required: REQUIRED_KEYS;
@@ -78,7 +82,7 @@ export type _$Object<
       closeOnResolve: CLOSE_ON_RESOLVE;
       isSerialized: IS_SERIALIZED;
       deserialized: DESERIALIZED;
-    };
+    }>;
 
 /**
  * Any `Object` meta-type
@@ -175,23 +179,25 @@ export type ResolveObject<
       And<IsObjectOpen<META_OBJECT>, Not<IsObjectClosedOnResolve<META_OBJECT>>>,
       If<
         IsObjectEmpty<META_OBJECT>,
-        { [KEY: string]: Resolve<ObjectOpenProps<META_OBJECT>, OPTIONS> },
-        { [KEY: string]: Resolve<Any, OPTIONS> }
+        DrainOuterGeneric<{
+          [KEY: string]: Resolve<ObjectOpenProps<META_OBJECT>, OPTIONS>;
+        }>,
+        DrainOuterGeneric<{ [KEY: string]: Resolve<Any, OPTIONS> }>
       >,
       {}
     >,
     DeepMergeUnsafe<
-      {
+      DrainOuterGeneric<{
         [KEY in Exclude<
           keyof ObjectValues<META_OBJECT>,
           ObjectRequiredKeys<META_OBJECT>
         >]?: Resolve<ObjectValues<META_OBJECT>[KEY], OPTIONS>;
-      },
-      {
+      }>,
+      DrainOuterGeneric<{
         [KEY in ObjectRequiredKeys<META_OBJECT>]: KEY extends keyof ObjectValues<META_OBJECT>
           ? Resolve<ObjectValues<META_OBJECT>[KEY], OPTIONS>
           : Resolve<Any, OPTIONS>;
-      }
+      }>
     >
   >
 >;

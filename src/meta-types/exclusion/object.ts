@@ -2,6 +2,7 @@
 import type {
   And,
   DoesExtend,
+  DrainOuterGeneric,
   If,
   IsNever,
   IsObject,
@@ -119,7 +120,7 @@ type ExcludeObjects<
 type ExcludeObjectValues<
   META_OBJECT_A extends ObjectType,
   META_OBJECT_B extends ObjectType,
-> = {
+> = DrainOuterGeneric<{
   [KEY in Extract<
     | keyof ObjectValues<META_OBJECT_A>
     | keyof ObjectValues<META_OBJECT_B>
@@ -134,7 +135,7 @@ type ExcludeObjectValues<
     IsAllowedIn<META_OBJECT_B, KEY>,
     IsRequiredIn<META_OBJECT_B, KEY>
   >;
-};
+}>;
 
 // UTILS
 
@@ -244,13 +245,15 @@ type IsExcludedBigEnough<
  */
 type RepresentableKeys<
   VALUE_EXCLUSION_RESULTS extends Record<string, ValueExclusionResultType>,
-> = {
-  [KEY in Extract<keyof VALUE_EXCLUSION_RESULTS, string>]: ExclusionResult<
-    VALUE_EXCLUSION_RESULTS[KEY]
-  > extends NeverType
-    ? never
-    : KEY;
-}[Extract<keyof VALUE_EXCLUSION_RESULTS, string>];
+> = DrainOuterGeneric<
+  {
+    [KEY in Extract<keyof VALUE_EXCLUSION_RESULTS, string>]: ExclusionResult<
+      VALUE_EXCLUSION_RESULTS[KEY]
+    > extends NeverType
+      ? never
+      : KEY;
+  }[Extract<keyof VALUE_EXCLUSION_RESULTS, string>]
+>;
 
 /**
  * Given a source `Object` meta-type, and a key-value to key-value exclusion results object, returns the resulting exclusion by propagating it to each key-value.
@@ -262,11 +265,11 @@ type PropagateExclusions<
   META_OBJECT extends ObjectType,
   VALUE_EXCLUSION_RESULTS extends Record<string, ValueExclusionResultType>,
 > = _Object<
-  {
+  DrainOuterGeneric<{
     [KEY in keyof VALUE_EXCLUSION_RESULTS]: PropagateExclusion<
       VALUE_EXCLUSION_RESULTS[KEY]
     >;
-  },
+  }>,
   ObjectRequiredKeys<META_OBJECT>,
   ObjectOpenProps<META_OBJECT>,
   IsObjectClosedOnResolve<META_OBJECT>,
@@ -316,13 +319,15 @@ type OmitOmittableKeys<
  */
 type OmittableKeys<
   VALUE_EXCLUSION_RESULTS extends Record<string, ValueExclusionResultType>,
-> = {
-  [KEY in Extract<keyof VALUE_EXCLUSION_RESULTS, string>]: IsOmittable<
-    VALUE_EXCLUSION_RESULTS[KEY]
-  > extends true
-    ? KEY
-    : never;
-}[Extract<keyof VALUE_EXCLUSION_RESULTS, string>];
+> = DrainOuterGeneric<
+  {
+    [KEY in Extract<keyof VALUE_EXCLUSION_RESULTS, string>]: IsOmittable<
+      VALUE_EXCLUSION_RESULTS[KEY]
+    > extends true
+      ? KEY
+      : never;
+  }[Extract<keyof VALUE_EXCLUSION_RESULTS, string>]
+>;
 
 // CONST
 
@@ -341,9 +346,9 @@ type ExcludeConstFromObject<
   _$Exclude<
     META_OBJECT,
     _Object<
-      {
+      DrainOuterGeneric<{
         [KEY in Extract<keyof CONST_VALUE, string>]: Const<CONST_VALUE[KEY]>;
-      },
+      }>,
       Extract<keyof CONST_VALUE, string>,
       Never,
       IsObjectClosedOnResolve<META_OBJECT>,

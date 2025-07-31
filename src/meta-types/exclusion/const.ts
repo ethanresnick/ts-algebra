@@ -1,4 +1,4 @@
-import type { If, IsNever, IsObject } from "~/utils";
+import type { DrainOuterGeneric, If, IsNever, IsObject } from "~/utils";
 
 import type { AnyType } from "../any";
 import type { ArrayType } from "../array";
@@ -115,6 +115,8 @@ type ExcludeConstValues<VALUE, META_OBJECT extends ObjectType> = {
  * @param VALUES Record<string, MetaType>
  * @returns string
  */
-type RepresentableKeys<VALUES> = {
-  [KEY in keyof VALUES]: VALUES[KEY] extends Never ? never : KEY;
-}[keyof VALUES];
+type RepresentableKeys<VALUES> = DrainOuterGeneric<
+  {
+    [KEY in keyof VALUES]: VALUES[KEY] extends Never ? never : KEY;
+  }[keyof VALUES]
+>;

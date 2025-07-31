@@ -10,3 +10,4 @@ export type { Prettify } from "./prettify";
 export type { Tail } from "./tail";
 export type { UnionLast } from "./unionLast";
 export type { UnionPop } from "./unionPop";
+export type { DrainOuterGeneric } from "./drain-outer-generic";

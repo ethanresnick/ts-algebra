@@ -1,4 +1,4 @@
-import type { And, If, Prettify } from "~/utils";
+import type { And, DrainOuterGeneric, If, Prettify } from "~/utils";
 
 import type { Any } from "./any";
 import type { NeverType } from "./never";
@@ -34,13 +34,13 @@ export type _$Array<
   VALUES = Any,
   IS_SERIALIZED = false,
   DESERIALIZED = never,
-> = {
+> = DrainOuterGeneric<{
   // ☝️ Prefixed with _ to not confuse with native Array type
   type: ArrayTypeId;
   values: VALUES;
   isSerialized: IS_SERIALIZED;
   deserialized: DESERIALIZED;
-};
+}>;
 
 /**
  * Any `Array` meta-type
@@ -73,5 +73,5 @@ export type ResolveArray<
   Deserialized<META_ARRAY>,
   ArrayValues<META_ARRAY> extends NeverType
     ? []
-    : Prettify<Resolve<ArrayValues<META_ARRAY>, OPTIONS>[]>
+    : Prettify<DrainOuterGeneric<Resolve<ArrayValues<META_ARRAY>, OPTIONS>[]>>
 >;

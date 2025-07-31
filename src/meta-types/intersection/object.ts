@@ -1,4 +1,4 @@
-import type { Or } from "~/utils";
+import type { DrainOuterGeneric, Or } from "~/utils";
 
 import type { AnyType } from "../any";
 import type { ArrayType } from "../array";
@@ -134,9 +134,9 @@ type IntersectObjects<
     IsObjectClosedOnResolve<META_OBJECT_B>
   >,
 > = $MergeObjectPropsToSerializable<
-  {
+  DrainOuterGeneric<{
     [KEY in keyof INTERSECTED_VALUES]: INTERSECTED_VALUES[KEY];
-  },
+  }>,
   ObjectRequiredKeys<META_OBJECT_A> | ObjectRequiredKeys<META_OBJECT_B>,
   INTERSECTED_OPEN_PROPS,
   INTERSECTED_CLOSE_ON_RESOLVE,
@@ -153,7 +153,7 @@ type IntersectObjects<
 type IntersectObjectsValues<
   META_OBJECT_A extends ObjectType,
   META_OBJECT_B extends ObjectType,
-> = {
+> = DrainOuterGeneric<{
   [KEY in Extract<
     keyof ObjectValues<META_OBJECT_A> | keyof ObjectValues<META_OBJECT_B>,
     string
@@ -161,4 +161,4 @@ type IntersectObjectsValues<
     ObjectValue<META_OBJECT_A, KEY>,
     ObjectValue<META_OBJECT_B, KEY>
   >;
-};
+}>;

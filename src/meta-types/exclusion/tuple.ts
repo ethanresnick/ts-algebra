@@ -1,5 +1,12 @@
 /* eslint-disable max-lines */
-import type { And, DoesExtend, If, Not, Tail } from "~/utils";
+import type {
+  And,
+  DoesExtend,
+  DrainOuterGeneric,
+  If,
+  Not,
+  Tail,
+} from "~/utils";
 
 import type { AnyType } from "../any";
 import type { ArrayType, ArrayValues } from "../array";
@@ -110,21 +117,23 @@ type ExcludeTuples<
   >,
 > = If<
   DoesTupleSizesMatch<META_TUPLE_A, META_TUPLE_B, VALUE_EXCLUSION_RESULTS>,
-  {
-    moreThanTwo: META_TUPLE_A;
-    onlyOne: $Tuple<
-      PropagateExclusions<VALUE_EXCLUSION_RESULTS>,
-      TupleOpenProps<META_TUPLE_A>,
-      IsSerialized<META_TUPLE_A>,
-      Deserialized<META_TUPLE_A>
-    >;
-    none: OmitOmittableExcludedItems<META_TUPLE_A, VALUE_EXCLUSION_RESULTS>;
-  }[And<
-    IsTupleOpen<META_TUPLE_A>,
-    IS_OPEN_PROPS_EXCLUSION_REPRESENTABLE
-  > extends true
-    ? "moreThanTwo"
-    : GetTupleLength<REPRESENTABLE_VALUE_EXCLUSION_RESULTS>],
+  DrainOuterGeneric<
+    {
+      moreThanTwo: META_TUPLE_A;
+      onlyOne: $Tuple<
+        PropagateExclusions<VALUE_EXCLUSION_RESULTS>,
+        TupleOpenProps<META_TUPLE_A>,
+        IsSerialized<META_TUPLE_A>,
+        Deserialized<META_TUPLE_A>
+      >;
+      none: OmitOmittableExcludedItems<META_TUPLE_A, VALUE_EXCLUSION_RESULTS>;
+    }[And<
+      IsTupleOpen<META_TUPLE_A>,
+      IS_OPEN_PROPS_EXCLUSION_REPRESENTABLE
+    > extends true
+      ? "moreThanTwo"
+      : GetTupleLength<REPRESENTABLE_VALUE_EXCLUSION_RESULTS>]
+  >,
   META_TUPLE_A
 >;
 
@@ -150,15 +159,13 @@ type ExcludeTupleValues<
   infer META_TUPLE_A_VALUES_HEAD,
   ...infer META_TUPLE_A_VALUES_TAIL,
 ]
-  ? // TODO increase TS version and use "extends" in Array https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#improved-inference-for-infer-types-in-template-string-types
-    META_TUPLE_A_VALUES_HEAD extends Type
+  ? META_TUPLE_A_VALUES_HEAD extends Type
     ? META_TUPLE_A_VALUES_TAIL extends Type[]
       ? META_TUPLE_B_VALUES extends [
           infer META_TUPLE_B_VALUES_HEAD,
           ...infer META_TUPLE_B_VALUES_TAIL,
         ]
-        ? // TODO increase TS version and use "extends" in Array https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#improved-inference-for-infer-types-in-template-string-types
-          META_TUPLE_B_VALUES_HEAD extends Type
+        ? META_TUPLE_B_VALUES_HEAD extends Type
           ? META_TUPLE_B_VALUES_TAIL extends Type[]
             ? ExcludeTupleValues<
                 META_TUPLE_A_VALUES_TAIL,
@@ -167,17 +174,19 @@ type ExcludeTupleValues<
                 IS_META_TUPLE_B_OPEN,
                 META_TUPLE_A_OPEN_PROPS,
                 META_TUPLE_B_OPEN_PROPS,
-                [
-                  ...VALUE_EXCLUSION_RESULTS,
-                  ValueExclusionResult<
-                    META_TUPLE_A_VALUES_HEAD,
-                    true,
-                    true,
-                    META_TUPLE_B_VALUES_HEAD,
-                    true,
-                    true
-                  >,
-                ]
+                DrainOuterGeneric<
+                  [
+                    ...VALUE_EXCLUSION_RESULTS,
+                    ValueExclusionResult<
+                      META_TUPLE_A_VALUES_HEAD,
+                      true,
+                      true,
+                      META_TUPLE_B_VALUES_HEAD,
+                      true,
+                      true
+                    >,
+                  ]
+                >
               >
             : never
           : never
@@ -188,17 +197,19 @@ type ExcludeTupleValues<
             IS_META_TUPLE_B_OPEN,
             META_TUPLE_A_OPEN_PROPS,
             META_TUPLE_B_OPEN_PROPS,
-            [
-              ...VALUE_EXCLUSION_RESULTS,
-              ValueExclusionResult<
-                META_TUPLE_A_VALUES_HEAD,
-                true,
-                true,
-                META_TUPLE_B_OPEN_PROPS,
-                IS_META_TUPLE_B_OPEN,
-                false
-              >,
-            ]
+            DrainOuterGeneric<
+              [
+                ...VALUE_EXCLUSION_RESULTS,
+                ValueExclusionResult<
+                  META_TUPLE_A_VALUES_HEAD,
+                  true,
+                  true,
+                  META_TUPLE_B_OPEN_PROPS,
+                  IS_META_TUPLE_B_OPEN,
+                  false
+                >,
+              ]
+            >
           >
       : never
     : never
@@ -216,17 +227,19 @@ type ExcludeTupleValues<
           IS_META_TUPLE_B_OPEN,
           META_TUPLE_A_OPEN_PROPS,
           META_TUPLE_B_OPEN_PROPS,
-          [
-            ...VALUE_EXCLUSION_RESULTS,
-            ValueExclusionResult<
-              META_TUPLE_A_OPEN_PROPS,
-              IS_META_TUPLE_A_OPEN,
-              false,
-              META_TUPLE_B_VALUES_HEAD,
-              true,
-              true
-            >,
-          ]
+          DrainOuterGeneric<
+            [
+              ...VALUE_EXCLUSION_RESULTS,
+              ValueExclusionResult<
+                META_TUPLE_A_OPEN_PROPS,
+                IS_META_TUPLE_A_OPEN,
+                false,
+                META_TUPLE_B_VALUES_HEAD,
+                true,
+                true
+              >,
+            ]
+          >
         >
       : never
     : never
@@ -287,8 +300,7 @@ type IsExcludedSmallEnough<
   infer VALUE_EXCLUSION_RESULTS_HEAD,
   ...infer VALUE_EXCLUSION_RESULTS_TAIL,
 ]
-  ? // TODO increase TS version and use "extends" in Array https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#improved-inference-for-infer-types-in-template-string-types
-    VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
+  ? VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
     ? VALUE_EXCLUSION_RESULTS_TAIL extends ValueExclusionResultType[]
       ? If<
           IsOutsideOfSourceScope<VALUE_EXCLUSION_RESULTS_HEAD>,
@@ -310,8 +322,7 @@ type IsExcludedBigEnough<
   infer VALUE_EXCLUSION_RESULTS_HEAD,
   ...infer VALUE_EXCLUSION_RESULTS_TAIL,
 ]
-  ? // TODO increase TS version and use "extends" in Array https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#improved-inference-for-infer-types-in-template-string-types
-    VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
+  ? VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
     ? VALUE_EXCLUSION_RESULTS_TAIL extends ValueExclusionResultType[]
       ? If<
           IsOutsideOfExcludedScope<VALUE_EXCLUSION_RESULTS_HEAD>,
@@ -336,8 +347,7 @@ type RepresentableExcludedValues<
   infer VALUE_EXCLUSION_RESULTS_HEAD,
   ...infer VALUE_EXCLUSION_RESULTS_TAIL,
 ]
-  ? // TODO increase TS version and use "extends" in Array https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#improved-inference-for-infer-types-in-template-string-types
-    VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
+  ? VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
     ? VALUE_EXCLUSION_RESULTS_TAIL extends ValueExclusionResultType[]
       ? ExclusionResult<VALUE_EXCLUSION_RESULTS_HEAD> extends NeverType
         ? RepresentableExcludedValues<
@@ -346,10 +356,12 @@ type RepresentableExcludedValues<
           >
         : RepresentableExcludedValues<
             VALUE_EXCLUSION_RESULTS_TAIL,
-            [
-              ...REPRESENTABLE_VALUE_EXCLUSION_RESULTS,
-              VALUE_EXCLUSION_RESULTS_HEAD,
-            ]
+            DrainOuterGeneric<
+              [
+                ...REPRESENTABLE_VALUE_EXCLUSION_RESULTS,
+                VALUE_EXCLUSION_RESULTS_HEAD,
+              ]
+            >
           >
       : never
     : never
@@ -367,12 +379,13 @@ type PropagateExclusions<
   infer VALUE_EXCLUSION_RESULTS_HEAD,
   ...infer VALUE_EXCLUSION_RESULTS_TAIL,
 ]
-  ? // TODO increase TS version and use "extends" in Array https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#improved-inference-for-infer-types-in-template-string-types
-    VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
+  ? VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
     ? VALUE_EXCLUSION_RESULTS_TAIL extends ValueExclusionResultType[]
       ? PropagateExclusions<
           VALUE_EXCLUSION_RESULTS_TAIL,
-          [...RESULT, PropagateExclusion<VALUE_EXCLUSION_RESULTS_HEAD>]
+          DrainOuterGeneric<
+            [...RESULT, PropagateExclusion<VALUE_EXCLUSION_RESULTS_HEAD>]
+          >
         >
       : never
     : never
@@ -419,14 +432,13 @@ type OmittableExcludedItems<
   infer VALUE_EXCLUSION_RESULTS_HEAD,
   ...infer VALUE_EXCLUSION_RESULTS_TAIL,
 ]
-  ? // TODO increase TS version and use "extends" in Array https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#improved-inference-for-infer-types-in-template-string-types
-    VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
+  ? VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
     ? VALUE_EXCLUSION_RESULTS_TAIL extends ValueExclusionResultType[]
       ? If<
           IsOmittable<VALUE_EXCLUSION_RESULTS_HEAD>,
           OmittableExcludedItems<
             VALUE_EXCLUSION_RESULTS_TAIL,
-            [...RESULT, VALUE_EXCLUSION_RESULTS_HEAD]
+            DrainOuterGeneric<[...RESULT, VALUE_EXCLUSION_RESULTS_HEAD]>
           >,
           OmittableExcludedItems<VALUE_EXCLUSION_RESULTS_TAIL, RESULT>
         >
@@ -450,14 +462,15 @@ type RequiredExcludedItems<
   infer VALUE_EXCLUSION_RESULTS_HEAD,
   ...infer VALUE_EXCLUSION_RESULTS_TAIL,
 ]
-  ? // TODO increase TS version and use "extends" in Array https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#improved-inference-for-infer-types-in-template-string-types
-    VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
+  ? VALUE_EXCLUSION_RESULTS_HEAD extends ValueExclusionResultType
     ? VALUE_EXCLUSION_RESULTS_TAIL extends ValueExclusionResultType[]
       ? IsOmittable<VALUE_EXCLUSION_RESULTS_HEAD> extends true
         ? RESULT
         : RequiredExcludedItems<
             VALUE_EXCLUSION_RESULTS_TAIL,
-            [...RESULT, SourceValue<VALUE_EXCLUSION_RESULTS_HEAD>]
+            DrainOuterGeneric<
+              [...RESULT, SourceValue<VALUE_EXCLUSION_RESULTS_HEAD>]
+            >
           >
       : never
     : never
@@ -496,5 +509,8 @@ type ExtractConstValues<
   CONST_VALUES extends unknown[],
   RESULT extends unknown[] = [],
 > = CONST_VALUES extends [infer CONST_VALUES_HEAD, ...infer CONST_VALUES_TAIL]
-  ? ExtractConstValues<CONST_VALUES_TAIL, [...RESULT, Const<CONST_VALUES_HEAD>]>
+  ? ExtractConstValues<
+      CONST_VALUES_TAIL,
+      DrainOuterGeneric<[...RESULT, Const<CONST_VALUES_HEAD>]>
+    >
   : RESULT;

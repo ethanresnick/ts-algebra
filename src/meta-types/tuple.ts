@@ -1,9 +1,9 @@
-import type { And, DoesExtend, If, Not } from "~/utils";
+import type { And, DoesExtend, DrainOuterGeneric, If, Not } from "~/utils";
 
 import type { Never, NeverType } from "./never";
 import type { Resolve, ResolveOptions } from "./resolve";
 import type { Type } from "./type";
-import type { Deserialized, IsSerialized } from "./utils";
+import { Deserialized, IsSerialized } from "./utils";
 
 /**
  * Type id of the `Tuple` meta-type
@@ -38,14 +38,14 @@ export type $Tuple<
   DESERIALIZED = never,
 > = IsAnyValueNever<VALUES> extends true
   ? Never
-  : {
+  : DrainOuterGeneric<{
       type: TupleTypeId;
       values: VALUES;
       isOpen: Not<DoesExtend<OPEN_PROPS, NeverType>>;
       openProps: OPEN_PROPS;
       isSerialized: IS_SERIALIZED;
       deserialized: DESERIALIZED;
-    };
+    }>;
 
 /**
  * Return `true` if tuple of meta-types contains the `Never` meta-type
@@ -109,10 +109,12 @@ export type ResolveTuple<
   Deserialized<META_TUPLE>,
   If<
     IsTupleOpen<META_TUPLE>,
-    [
-      ...RecurseOnTuple<TupleValues<META_TUPLE>, OPTIONS>,
-      ...Resolve<TupleOpenProps<META_TUPLE>, OPTIONS>[],
-    ],
+    DrainOuterGeneric<
+      [
+        ...RecurseOnTuple<TupleValues<META_TUPLE>, OPTIONS>,
+        ...Resolve<TupleOpenProps<META_TUPLE>, OPTIONS>[],
+      ]
+    >,
     RecurseOnTuple<TupleValues<META_TUPLE>, OPTIONS>
   >
 >;
@@ -128,13 +130,12 @@ type RecurseOnTuple<
   OPTIONS extends ResolveOptions,
   RESULT extends unknown[] = [],
 > = VALUES extends [infer VALUES_HEAD, ...infer VALUES_TAIL]
-  ? // TODO increase TS version and use "extends" in Array https://devblogs.microsoft.com/typescript/announcing-typescript-4-8/#improved-inference-for-infer-types-in-template-string-types
-    VALUES_HEAD extends Type
+  ? VALUES_HEAD extends Type
     ? VALUES_TAIL extends Type[]
       ? RecurseOnTuple<
           VALUES_TAIL,
           OPTIONS,
-          [...RESULT, Resolve<VALUES_HEAD, OPTIONS>]
+          DrainOuterGeneric<[...RESULT, Resolve<VALUES_HEAD, OPTIONS>]>
         >
       : never
     : never

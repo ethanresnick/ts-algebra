@@ -1,4 +1,4 @@
-import type { If, IsNever, IsObject } from "~/utils";
+import type { DrainOuterGeneric, If, IsNever, IsObject } from "~/utils";
 
 import type { AnyType } from "../any";
 import type { ArrayType } from "../array";
@@ -164,20 +164,22 @@ type IntersectObjectConstToObject<
 type IntersectConstValuesToObjectValues<
   CONST_VALUE,
   META_OBJECT extends ObjectType,
-> = {
+> = DrainOuterGeneric<{
   [KEY in Extract<
     keyof CONST_VALUE | ObjectRequiredKeys<META_OBJECT>,
     string
   >]: KEY extends keyof CONST_VALUE
     ? Intersect<Const<CONST_VALUE[KEY]>, ObjectValue<META_OBJECT, KEY>>
     : Never;
-};
+}>;
 
 /**
  * Given an `Object` meta-type, returns the keys of its values that extend the `Never` meta-type
  * @param META_OBJECT ObjectType
  * @returns string
  */
-type NeverKeys<META_OBJECT> = {
-  [KEY in keyof META_OBJECT]: META_OBJECT[KEY] extends Never ? KEY : never;
-}[keyof META_OBJECT];
+type NeverKeys<META_OBJECT> = DrainOuterGeneric<
+  {
+    [KEY in keyof META_OBJECT]: META_OBJECT[KEY] extends Never ? KEY : never;
+  }[keyof META_OBJECT]
+>;
